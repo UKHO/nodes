@@ -21,7 +21,9 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -247,7 +249,10 @@ public final class GraphQLRequestEntity {
             superClass = superClass.getSuperclass();
         }
 
-        Map<String, Property> children = new HashMap<String, Property>();
+        List<OrderedPropertyHolder> propertyHolders = new ArrayList<OrderedPropertyHolder>();
+        int index = 0;
+        long order = 0;
+        boolean orderFound = false;
         for (Field field : fields) {
             if (field.isSynthetic() || field.isEnumConstant()) continue;
 
@@ -264,6 +269,10 @@ public final class GraphQLRequestEntity {
             if (propertyAnnotation != null) {
                 arguments = new ArrayList<Argument>();
                 String name = propertyAnnotation.name();
+                if(propertyAnnotation.order() != Integer.MIN_VALUE) {
+                    orderFound = true;
+                    order = ((long) propertyAnnotation.order()) << 32 | index;
+                }
                 property.setResourceName(name);
                 propertyKey = field.getName();
                 for (GraphQLArgument graphQLArgument : propertyAnnotation.arguments()) {
@@ -313,7 +322,25 @@ public final class GraphQLRequestEntity {
             } else if (!isProperty(field)) {
                 property.setChildren(getChildren(field.getType(), propertyVariables));
             }
-            children.put(propertyKey, property);
+            propertyHolders.add(new OrderedPropertyHolder(propertyKey, property, order));
+            index++;
+        }
+
+        return assembleChildren(propertyHolders, orderFound);
+    }
+
+    private Map<String,Property> assembleChildren(List<OrderedPropertyHolder> propertyHolders, boolean orderFound) {
+        final Map<String,Property> children;
+        if (orderFound) {
+            Collections.sort(propertyHolders);
+            children = new LinkedHashMap<String, Property>();
+        }
+        else {
+            children = new HashMap<String, Property>();
+        }
+
+        for (OrderedPropertyHolder holder : propertyHolders) {
+            children.put(holder.getName(), holder.getProperty());
         }
         return children;
     }
