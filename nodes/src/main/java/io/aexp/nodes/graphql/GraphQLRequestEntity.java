@@ -13,20 +13,6 @@
 
 package io.aexp.nodes.graphql;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
 import io.aexp.nodes.graphql.annotations.GraphQLArgument;
 import io.aexp.nodes.graphql.annotations.GraphQLArguments;
 import io.aexp.nodes.graphql.annotations.GraphQLIgnore;
@@ -35,11 +21,26 @@ import io.aexp.nodes.graphql.annotations.GraphQLVariable;
 import io.aexp.nodes.graphql.annotations.GraphQLVariables;
 import io.aexp.nodes.graphql.exceptions.GraphQLException;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 public final class GraphQLRequestEntity {
 
     public static RequestBuilder Builder() {
         return new RequestBuilder();
     }
+
+    private static final int INT_BITS = 32;
 
     private final URL url;
     private final Map<String, String> headers;
@@ -269,9 +270,9 @@ public final class GraphQLRequestEntity {
             if (propertyAnnotation != null) {
                 arguments = new ArrayList<Argument>();
                 String name = propertyAnnotation.name();
-                if(propertyAnnotation.order() != Integer.MIN_VALUE) {
+                if (propertyAnnotation.order() != Integer.MIN_VALUE) {
                     orderFound = true;
-                    order = ((long) propertyAnnotation.order()) << 32 | index;
+                    order = ((long) propertyAnnotation.order()) << INT_BITS | index;
                 }
                 property.setResourceName(name);
                 propertyKey = field.getName();
@@ -329,13 +330,12 @@ public final class GraphQLRequestEntity {
         return assembleChildren(propertyHolders, orderFound);
     }
 
-    private Map<String,Property> assembleChildren(List<OrderedPropertyHolder> propertyHolders, boolean orderFound) {
-        final Map<String,Property> children;
+    private Map<String, Property> assembleChildren(List<OrderedPropertyHolder> propertyHolders, boolean orderFound) {
+        final Map<String, Property> children;
         if (orderFound) {
             Collections.sort(propertyHolders);
             children = new LinkedHashMap<String, Property>();
-        }
-        else {
+        } else {
             children = new HashMap<String, Property>();
         }
 
