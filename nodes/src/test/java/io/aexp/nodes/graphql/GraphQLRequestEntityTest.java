@@ -13,6 +13,9 @@
 
 package io.aexp.nodes.graphql;
 
+import io.aexp.nodes.graphql.models.TestMixedOrderedModel;
+import io.aexp.nodes.graphql.models.TestOrderedModel;
+import io.aexp.nodes.graphql.models.TestReverseOrderedModel;
 import org.junit.Before;
 import org.junit.Test;
 import io.aexp.nodes.graphql.models.TestModel;
@@ -164,4 +167,38 @@ public class GraphQLRequestEntityTest {
         assertEquals(Collections.singletonList(BigDecimal.class), requestEntity.getScalars());
         assertEquals("GraphQLRequestEntity{request='query { monay money } ', url='"+EXAMPLE_URL+"'}", requestEntity.toString());
     }
+
+    @Test
+    public void requestWithOrderedItems() throws MalformedURLException {
+        GraphQLRequestEntity requestEntity = GraphQLRequestEntity.Builder()
+                .url(EXAMPLE_URL)
+                .request(TestOrderedModel.class)
+                .build();
+        requestEntity.setRequestMethod(GraphQLTemplate.GraphQLMethod.QUERY);
+        assertEquals(EXAMPLE_URL, requestEntity.getUrl().toString());
+        assertEquals("GraphQLRequestEntity{request='query { test1 : test (number:\"ONE\") { number } test2 : testing (number:\"TWO\") { number } } ', url='" + EXAMPLE_URL + "'}", requestEntity.toString());
+    }
+
+    @Test
+    public void requestWithReverseOrderedItems() throws MalformedURLException {
+        GraphQLRequestEntity requestEntity = GraphQLRequestEntity.Builder()
+                .url(EXAMPLE_URL)
+                .request(TestReverseOrderedModel.class)
+                .build();
+        requestEntity.setRequestMethod(GraphQLTemplate.GraphQLMethod.QUERY);
+        assertEquals(EXAMPLE_URL, requestEntity.getUrl().toString());
+        assertEquals("GraphQLRequestEntity{request='query { test2 : testing (number:\"TWO\") { number } test1 : test (number:\"ONE\") { number } } ', url='" + EXAMPLE_URL + "'}", requestEntity.toString());
+    }
+
+    @Test
+    public void requestWithOrderedAndUnorderedItems() throws MalformedURLException {
+        GraphQLRequestEntity requestEntity = GraphQLRequestEntity.Builder()
+                .url(EXAMPLE_URL)
+                .request(TestMixedOrderedModel.class)
+                .build();
+        requestEntity.setRequestMethod(GraphQLTemplate.GraphQLMethod.QUERY);
+        assertEquals(EXAMPLE_URL, requestEntity.getUrl().toString());
+        assertEquals("GraphQLRequestEntity{request='query { test1 : test (number:\"ONE\") { number } test2 : testing (number:\"TWO\") { number } test3 : moreTesting (number:\"THREE\") { number } } ', url='" + EXAMPLE_URL + "'}", requestEntity.toString());
+    }
+
 }
